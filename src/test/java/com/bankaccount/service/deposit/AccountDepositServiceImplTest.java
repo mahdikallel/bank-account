@@ -113,7 +113,7 @@ class AccountDepositServiceImplTest {
         accountDepositService.deposit(account, thirdAmountToDeposit);
 
         // Then
-        List<Operation> expectedOperation =  List.of(
+        List<Operation> expectedOperation = List.of(
                 new Operation(Type.DEPOSIT, this.now, firstAmountToDeposit, firstAmountToDeposit),
                 new Operation(Type.DEPOSIT, this.now, secondAmountToDeposit, firstAmountToDeposit.add(secondAmountToDeposit)),
                 new Operation(Type.DEPOSIT, this.now, thirdAmountToDeposit, firstAmountToDeposit.add(secondAmountToDeposit).add(thirdAmountToDeposit))

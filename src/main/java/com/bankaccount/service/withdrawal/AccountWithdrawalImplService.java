@@ -26,15 +26,18 @@ public class AccountWithdrawalImplService implements AccountWithdrawalService {
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new NegativeAmountException(String.format("Withdrawal Amount %s cannot be negative", amount));
         }
-        if (accountRepository.findAccountById(account.getId()).isPresent()) {
-            if (account.getBalance().compareTo(amount) < 0) {
-                throw new InsufficientBalanceException("Insufficient balance!");
-            }
-            BigDecimal newBalance = account.getBalance().subtract(amount);
-            Operation operation = new Operation(Type.WITHDRAWAL, this.localDateTime, amount, newBalance);
-            account.getOperations().add(operation);
-        } else {
-            throw new AccountNotExistException(String.format("Account with id %s dose not exist", account.getId()));
-        }
+        BigDecimal newBalance = calculateWithdrawalNewBalance(account, amount);
+        Operation operation = new Operation(Type.WITHDRAWAL, this.localDateTime, amount, newBalance);
+        account.getOperations().add(operation);
+    }
+
+    private BigDecimal calculateWithdrawalNewBalance(Account account, BigDecimal amount) {
+        return accountRepository.findAccountById(account.getId())
+                .map(foundedAccount -> {
+                    if (account.getBalance().compareTo(amount) < 0) {
+                        throw new InsufficientBalanceException("Insufficient balance!");
+                    }
+                    return account.getBalance().subtract(amount);
+                }).orElseThrow(() -> new AccountNotExistException(String.format("Account with id %s dose not exist", account.getId())));
     }
 }

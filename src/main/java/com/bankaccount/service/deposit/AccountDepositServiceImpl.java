@@ -22,18 +22,17 @@ public class AccountDepositServiceImpl implements AccountDepositService {
 
     @Override
     public void deposit(Account account, BigDecimal amount) throws NegativeAmountException, AccountNotExistException {
-
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new NegativeAmountException(String.format("Deposit Amount %s cannot be negative", amount));
         }
-        if (accountRepository.findAccountById(account.getId()).isPresent()) {
-            BigDecimal balance = account.getBalance();
+        BigDecimal newBalance = calculateDepositNewBalance(account, amount);
+        account.getOperations()
+                .add(new Operation(Type.DEPOSIT, this.localDateTime, amount, newBalance));
+    }
 
-
-            account.getOperations()
-                    .add(new Operation(Type.DEPOSIT, this.localDateTime, amount, amount.add(balance)));
-        } else {
-            throw new AccountNotExistException(String.format("Account with id %s dose not exist", account.getId()));
-        }
+    private BigDecimal calculateDepositNewBalance(Account account, BigDecimal amount) {
+        return accountRepository.findAccountById(account.getId())
+                .map(foundedAccount -> foundedAccount.getBalance().add(amount))
+                .orElseThrow(() -> new AccountNotExistException(String.format("Account with id %s dose not exist", account.getId())));
     }
 }
