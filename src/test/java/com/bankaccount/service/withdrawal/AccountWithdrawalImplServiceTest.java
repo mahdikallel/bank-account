@@ -1,6 +1,7 @@
 package com.bankaccount.service.withdrawal;
 
 import com.bankaccount.exception.AccountNotExistException;
+import com.bankaccount.exception.InsufficientBalanceException;
 import com.bankaccount.exception.NegativeAmountException;
 import com.bankaccount.model.account.Account;
 import com.bankaccount.model.operation.Operation;
@@ -29,7 +30,7 @@ class AccountWithdrawalImplServiceTest {
     }
 
     @Test
-    public void should_create_withdrawal_operation_when_calling_withdrawal_method() throws NegativeAmountException, AccountNotExistException {
+    public void should_create_withdrawal_operation_when_calling_withdrawal_method() throws NegativeAmountException, AccountNotExistException, InsufficientBalanceException {
         // Given
 
         Account account = new Account("account1", new ArrayList<>());
@@ -77,6 +78,28 @@ class AccountWithdrawalImplServiceTest {
 
         // Then
         Assertions.assertEquals(accountNotExistException.getMessage(), "Account with id account1 dose not exist");
+    }
+
+
+    @Test
+    public void should_throw_exception_when_insufficient_balance() {
+        // Given
+
+        Account account = new Account("account1", new ArrayList<>());
+
+        account.getOperations().add(
+                new Operation(Type.DEPOSIT, this.now, new BigDecimal("100"), new BigDecimal("100"))
+        );
+        accountRepository.add(account);
+
+
+        //When
+        Exception insufficientBalanceException = Assertions.assertThrows(InsufficientBalanceException.class, () -> {
+            accountWithdrawalService.withdrawal(account, new BigDecimal("110"));
+        });
+
+        //Then
+        Assertions.assertEquals(insufficientBalanceException.getMessage(), "Insufficient balance!");
     }
 
 
