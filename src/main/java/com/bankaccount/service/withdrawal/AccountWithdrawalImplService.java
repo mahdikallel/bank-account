@@ -1,6 +1,7 @@
 package com.bankaccount.service.withdrawal;
 
 import com.bankaccount.exception.AccountNotExistException;
+import com.bankaccount.exception.InsufficientBalanceException;
 import com.bankaccount.exception.NegativeAmountException;
 import com.bankaccount.model.account.Account;
 import com.bankaccount.model.operation.Operation;
@@ -21,20 +22,19 @@ public class AccountWithdrawalImplService implements AccountWithdrawalService {
     }
 
     @Override
-    public void withdrawal(Account account, BigDecimal amount) throws NegativeAmountException, AccountNotExistException {
-
+    public void withdrawal(Account account, BigDecimal amount) throws NegativeAmountException, AccountNotExistException, InsufficientBalanceException {
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new NegativeAmountException(String.format("Withdrawal Amount %s cannot be negative", amount));
         }
         if (accountRepository.findAccountById(account.getId()).isPresent()) {
-            BigDecimal newBalance = account.getBalance()
-                    .subtract(amount);
+            if (account.getBalance().compareTo(amount) < 0) {
+                throw new InsufficientBalanceException("Insufficient balance!");
+            }
+            BigDecimal newBalance = account.getBalance().subtract(amount);
             Operation operation = new Operation(Type.WITHDRAWAL, this.localDateTime, amount, newBalance);
-
             account.getOperations().add(operation);
         } else {
             throw new AccountNotExistException(String.format("Account with id %s dose not exist", account.getId()));
         }
-
     }
 }
